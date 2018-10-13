@@ -1,5 +1,5 @@
 # minmips-assembler
-minmipsのアセンブラ
+[minmips](https://github.com/terakun/minmips)のアセンブラ
 
 fib.txt
 ```
