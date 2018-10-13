@@ -1,4 +1,4 @@
 [[package]]
-name = "asm2bin"
+name = "minmips-assembler"
 version = "0.1.0"
 

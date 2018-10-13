@@ -1,5 +1,5 @@
 [package]
-name = "asm2bin"
+name = "minmips-assembler"
 version = "0.1.0"
 authors = ["Terasaki Shun <t.tera1217@gmail.com>"]
 
