@@ -10,6 +10,7 @@ enum Mnemonic {
     AND,
     OR,
     J,
+    JR,
     SLT,
     ADD,
     SUB,
@@ -58,6 +59,7 @@ fn str2instr(s: &String) -> Result<Instruction, String> {
         "and" => Mnemonic::AND,
         "or" => Mnemonic::OR,
         "j" => Mnemonic::J,
+        "jr" => Mnemonic::JR,
         "slt" => Mnemonic::SLT,
         "add" => Mnemonic::ADD,
         "sub" => Mnemonic::SUB,
@@ -124,15 +126,15 @@ fn mnemonic2funct(mnemonic: Mnemonic) -> u32 {
         Mnemonic::AND => 36,
         Mnemonic::OR => 37,
         Mnemonic::SLT => 42,
+        Mnemonic::JR => 8,
         _ => 0,
     }
 }
 
 fn mnemonictype(mnemonic: Mnemonic) -> InstructionType {
     match mnemonic {
-        Mnemonic::ADD | Mnemonic::SUB | Mnemonic::AND | Mnemonic::OR | Mnemonic::SLT => {
-            InstructionType::R
-        }
+        Mnemonic::ADD | Mnemonic::SUB | Mnemonic::AND | Mnemonic::OR | Mnemonic::SLT |
+        Mnemonic::JR => InstructionType::R,
         Mnemonic::ADDI | Mnemonic::BEQ | Mnemonic::LW | Mnemonic::SW => InstructionType::I,
         Mnemonic::J => InstructionType::J,
     }
@@ -140,7 +142,8 @@ fn mnemonictype(mnemonic: Mnemonic) -> InstructionType {
 
 fn mnemonic2op(mnemonic: Mnemonic) -> u32 {
     match mnemonic {
-        Mnemonic::ADD | Mnemonic::SUB | Mnemonic::AND | Mnemonic::OR | Mnemonic::SLT => 0,
+        Mnemonic::ADD | Mnemonic::SUB | Mnemonic::AND | Mnemonic::OR | Mnemonic::SLT |
+        Mnemonic::JR => 0,
         Mnemonic::ADDI => 8,
         Mnemonic::LW => 35,
         Mnemonic::SW => 43,
@@ -164,18 +167,23 @@ fn instrs2bin(instrs: Vec<Instruction>) -> Vec<u32> {
                 let op = mnemonic2op(instr.mnemonic);
                 let operands = &instr.operands;
                 if operands.len() != 3 {
-                    panic!("something wrong!");
-                }
-                let operands = match (&operands[1], &operands[2], &operands[0]) {
-                    (&Operand::Reg(rs), &Operand::Reg(rt), &Operand::Reg(rd)) => {
-                        rs << 21 | rt << 16 | rd << 11
-                    }
-                    _ => {
+                    if let Operand::Reg(rs) = operands[1] {
+                        op << 26 | rs << 21
+                    } else {
                         panic!("something wrong!");
                     }
-                };
-                let funct = mnemonic2funct(instr.mnemonic);
-                op << 26 | operands | funct
+                } else {
+                    let operands = match (&operands[1], &operands[2], &operands[0]) {
+                        (&Operand::Reg(rs), &Operand::Reg(rt), &Operand::Reg(rd)) => {
+                            rs << 21 | rt << 16 | rd << 11
+                        }
+                        _ => {
+                            panic!("something wrong!");
+                        }
+                    };
+                    let funct = mnemonic2funct(instr.mnemonic);
+                    op << 26 | operands | funct
+                }
             }
             InstructionType::I => {
                 let op = mnemonic2op(instr.mnemonic);
